@@ -1,35 +1,90 @@
 module UPS
   class ShipmentConfirmRequest
-    def self.request(*options)
-      self.build_request(*options)
+
+    # Creates a new instance of a ShipmentConfirmRequest
+    def initialize
+    end
+
+    # Set the shipper information
+    # Params:
+    # +name+:: Ship from name
+    # +address+:: Ship from address
+    # +address2+:: (optional) Second address line
+    # +city+:: Ship from city
+    # +state+:: (optional) Two character state/province code
+    # +zip+:: (optional) Ship from Postal Code
+    # +country_code+:: (optional) Defaults to 'US'
+    def ship_from(*shipping_info)
+      @ship_from = shipping_info
+    end
+
+    # Set the shipment information
+    # Params:
+    # +name+:: Ship to name
+    # +address+:: Ship to address
+    # +address2+:: (optional) Second address line
+    # +city+:: Ship to city
+    # +state+:: (optional) Two character state/province code
+    # +zip+:: (optional) Ship to Postal Code
+    # +country_code+:: (optional) Defaults to 'US'
+    def ship_to(*shipping_info)
+      @ship_to = shipping_info
+    end
+
+    # Set the payment information for the ShipmentConfirmRequest to bill the shipper
+    # Params:
+    # +credit_card+:: {UPS::CreditCard}[rdoc-ref:UPS::CreditCard] The Credit Card provider
+    # +card_number+:: The credit cards number
+    # +expiration_date+:: The credit cards expiration date in the 'MMYYYY' format
+    # +security_code+ (optional):: The 3-4 digit security code for the credit card.
+    def bill_shipper(*payment_info)
+      @payment_info = payment_info
+    end
+
+    # Sends the ShipmentConfirmRequest and returns a response and raises a {UPS::APIError}[rdoc-ref:UPS::APIError]
+    # if the ShipmentConfirmRequest hasn't been provided payment info, from shipping info, or to 
+    # shipping info.
+    def send_request
+      raise UPS::APIError, 'You must provide payment info' if !@payment_info
+      raise UPS::APIError, 'You must provide from shipment info' if !@ship_from
+      raise UPS::APIError, 'You must provide to shipment info' if !@ship_to
+      # TODO: make request and return new object
     end
 
     private
-    def self.build_request(options)
+
+    # Builds the request that we will send to the API
+    def build_request(options)
       builder = Nokogiri::XML::Builder.new do |xml|
         xml.ShipmentConfirmRequest {
           xml.Request {
             xml.RequestAction 'ShipConfirm'
-            xml.RequestAction 'nonvalidate'
+            xml.RequestOption 'nonvalidate'
           }
         }
         xml.Shipment {
           xml.Shipper {
-            xml.AddressLine1 options[:shipper][:address]
-            xml.City options[:shipper][:city]
-            xml.StateProvinceCode options[:shipper][:state]
-            xml.CountryCode options[:shipper][:country] || 'US'
-            xml.PostalCode options[:shipper][:postal_code]
+            xml.Name @ship_from[:name]
+            xml.ShipperNumber UPS.shipper_number
+            xml.Address {
+              xml.AddressLine1 @ship_from[:address]
+              xml.AddressLine2 @ship_from[:address2] if @ship_from[:address2]
+              xml.City @ship_from[:city]
+              xml.StateProvinceCode @ship_from[:state] if @ship_from[:state]
+              xml.PostalCode @ship_from[:zip] if @ship_from[:zip]
+              xml.CountryCode @ship_from[:country] || 'US'
+            }
           }
-        }
-        xml.ShipTo {
-          xml.CompanyName options[:ship_to][:name]
-          xml.Address {
-            xml.AddressLine1 options[:ship_to][:address]
-            xml.City options[:ship_to][:city]
-            xml.StateProvinceCode options[:ship_to][:state]
-            xml.CountryCode options[:ship_to][:country] || 'US'
-            xml.PostalCode options[:ship_to][:postal_code]
+          xml.ShipTo {
+            xml.CompanyName @ship_to[:name]
+            xml.Address {
+              xml.AddressLine1 @ship_to[:address]
+              xml.AddressLine2 @ship_to[:address2] if @ship_to[:address2]
+              xml.City @ship_to[:city]
+              xml.StateProvinceCode @ship_to[:state] if @ship_to[:state]
+              xml.PostalCode @ship_to[:zip] if @ship_to[:zip]
+              xml.PostalCode @ship_to[:country] || 'US'
+            }
           }
         }
         xml.Service {

@@ -1,5 +1,6 @@
 require 'ups'
 require 'minitest/autorun'
+require 'minitest/pride'
 
 API_KEY = '12345'
 USERNAME = 'username'
