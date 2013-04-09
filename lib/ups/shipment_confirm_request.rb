@@ -41,6 +41,20 @@ module UPS
       @payment_info = payment_info
     end
 
+    # Sets the shipment type for this shipment
+    # Params:
+    # +type+:: Accepts a {UPS::ShipmentType}[rdoc-ref:UPS::ShipmentType]
+    def shipment_type(type)
+      @packaging_type = type
+    end
+
+    # Sets the shipment type for this shipment
+    # Params:
+    # +type+:: Accepts a {UPS::PackageType}[rdoc-ref:UPS::PackageType]
+    def package_type(type)
+      @package_type = type
+    end
+
     # Sends the ShipmentConfirmRequest and returns a response and raises a {UPS::APIError}[rdoc-ref:UPS::APIError]
     # if the ShipmentConfirmRequest hasn't been provided payment info, from shipping info, or to 
     # shipping info.
@@ -48,7 +62,29 @@ module UPS
       raise UPS::APIError, 'You must provide payment info' if !@payment_info
       raise UPS::APIError, 'You must provide from shipment info' if !@ship_from
       raise UPS::APIError, 'You must provide to shipment info' if !@ship_to
+      raise UPS::APIError, 'You must provide a packaging type' if !@packaging_type
+      raise UPS::APIError, 'You must provide dimensions/measurements' if !@measurements
       # TODO: make request and return new object
+    end
+
+    # Sets the dimensions of your package
+    # Params:
+    # +unit+:: The units that you want to use, accepts the following:
+    # A = Barrel, BE = Bundle, BG = Bag, BH = Bunch, BOX = Box, BT = Bolt,
+    # BU = Butt, CI = Canister, CM = Centimeter, CON = Container,
+    # CR = Crate, CS = Case, CT = Carton, CY = Cylinder, DOZ = Dozen,
+    # EA = Each, EN = Envelope, FT = Feet, KG = Kilogram,
+    # KGS = Kilograms, LB = Pound, LBS = Pounds, L = Liter,
+    # M = Meter, NMB = Number, PA = Packet, PAL = Pallet,
+    # PC = Piece, PCS = Pieces, PF = Proof Liters, PKG = Package ,
+    # PR = Pair, PRS = Pairs, RL = Roll, SET = Set,
+    # SME = Square Meters, SYD = Square Yards, TU = Tube,
+    # YD = Yard, OTH = Other.
+    # +length+:: Package length
+    # +width+:: Package width
+    # +height+:: Package height
+    def dimensions(*measurements)
+      @measurements = measurements
     end
 
     private
@@ -88,19 +124,34 @@ module UPS
           }
         }
         xml.Service {
-          xml.Code options[:shipping_method][:code]
-          xml.Description options[:shipping_method][:description]
+          xml.Code @shipment_type
         }
         xml.PaymentInformation {
-          #todo
+          xml.Prepaid {
+            xml.BillShipper {
+              xml.type @payment_info[:credit_card]
+              xml.type @payment_info[:card_number]
+              xml.type @payment_info[:expiration_date]
+              xml.type @payment_info[:security_code] if @payment_info[:security_code]
+            }
+          }
         }
         xml.Package {
           xml.PackagingType {
-            #todo
+            xml.type @package_type
           }
-        }
-        xml.Dimensions {
-          # todo
+          xml.Dimensions {
+            xml.UnitOfMeasurement {
+              @measurements[:unit]
+            }
+            xml.Length @measurements[:length]
+            xml.Width @measurements[:width]
+            xml.Height @measurements[:height]
+          }
+
+          xml.PackageWeight {
+            xml.Weight @measurements[:weight]
+          }
         }
 
         xml.LabelSpecification {

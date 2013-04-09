@@ -1,4 +1,8 @@
+require 'ups/credit_card'
 require 'ups/error'
+require 'ups/package_type'
+require 'ups/shipment_confirm_request'
+require 'ups/shipment_type'
 require 'ups/version'
 require 'nokogiri'
 
