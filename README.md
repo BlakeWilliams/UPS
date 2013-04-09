@@ -3,9 +3,10 @@ This gem will allow you to create paid shipping labels and give you a base64 rep
 
 ## TODO
 
-1. Finish ShipmentConfirmRequest with a decent way to build the requests since it requires a lot of information.
-2. Add configuration options to ShipmentConfirmRequest such as PackagingType, PaymentInformation, etc.
-3. Add AcceptShipmentRequest class to accept the information as well the returned request with the label information.
+1. Start testing ShipmentConfirmRequest
+2. Add the ability to accept a ShipmentConfirmRequest after it was sent
+3. Add configuration options to ShipmentConfirmRequest such as PackagingType, PaymentInformation, etc.
+4. Add AcceptShipmentRequest class to accept the information as well the returned request with the label information.
 
 ## Contributing
 
